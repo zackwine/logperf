@@ -6,15 +6,15 @@ import (
   "log"
   "os"
   "runtime/pprof"
+  "time"
 )
 
 var (
-  testFile    = flag.String("testfile", "test.yaml", "The path to the test file (yaml) defining tests to run.")
-  cpuprofile  = flag.String("cpuprofile", "", "write cpu profile to file")
+  testFile   = flag.String("testfile", "test.yaml", "The path to the test file (yaml) defining tests to run.")
+  cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
   logger = log.New(os.Stderr, "", log.LstdFlags)
 )
-
 
 func printUsageAndBail(message string) {
   fmt.Fprintln(os.Stderr, "ERROR:", message)
@@ -45,12 +45,12 @@ func main() {
   logger.Printf("error: %v", testConfigs)
   if err != nil {
     logger.Printf("error: %v", err)
-  }else{
+  } else {
     logger.Printf("testConfigs: %v", testConfigs)
   }
 
-  logperf := NewLogPerf(300)
-  logperf.SendLogs()
+  tcp := NewTcpOutput("127.0.0.1:5000", logger)
+  logflow := NewLogFlow(tcp, logger)
+  logflow.timerTask(40*time.Microsecond, 50000)
 
 }
-

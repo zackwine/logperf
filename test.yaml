@@ -1,7 +1,7 @@
 tests:
-  - url: "http://op-ingest-fluentd.elb.load-2.ciscoanalytics.com:24224/logs.dp.vmr"
-    proxy: "http://proxy.esl.cisco.com:80"
-    count: 100
-    period: 20
-    dayoffsets: "0"
+  - addr: "127.0.0.1:5000"
+    count: 50000
+    period: 40
+    dayoffsets: 0
     message: '{ "message":"Fake message" }'
+    component: "logperf"

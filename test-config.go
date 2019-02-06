@@ -3,22 +3,22 @@ package main
 import (
   "fmt"
   "io/ioutil"
+
   "gopkg.in/yaml.v2"
 )
 
-
 type TestConfig struct {
-  Url string
-  Proxy string
-  Count int
-  Period int
-  Message string
+  Addr       string
+  Count      int
+  Period     int
+  Daysoffset int
+  Message    string
+  Component  string
 }
 
 type TestConfigs struct {
-    TestCfgs []TestConfig `tests`
+  TestCfgs []TestConfig `tests`
 }
-
 
 func NewTestConfigs(filename string) (*TestConfigs, error) {
   t := &TestConfigs{}
@@ -33,4 +33,3 @@ func NewTestConfigs(filename string) (*TestConfigs, error) {
   }
   return t, err
 }
-
