@@ -1,8 +1,10 @@
-tests:
-  - addr: "127.0.0.1:5000"
+logperfs:
+  - output: "tcp"
+    addr: "127.0.0.1:5000"
     count: 50000
     period: 40
     dayoffsets: 0
     message: '{ "message":"Fake message" }'
     component: "logperf"
+    padding: 300
     routines: 1

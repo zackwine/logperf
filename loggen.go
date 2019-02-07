@@ -35,7 +35,6 @@ func NewLogGenerator(componentName string, uuid string) *LogGenerator {
   l.baseMap["ssinst"] = "007"
   l.baseMap["dc"] = "node.fake.vci"
   l.baseMap["host"] = componentName
-  l.baseMap["_index"] = "logstash-2017-12-04"
   l.baseMap["sessionId"] = uuid
 
   return l

@@ -6,11 +6,10 @@ import (
   "log"
   "os"
   "runtime/pprof"
-  "time"
 )
 
 var (
-  testFile   = flag.String("testfile", "test.yaml", "The path to the test file (yaml) defining tests to run.")
+  perffile   = flag.String("perffile", "logperf.yaml", "The path to the logperf file (yaml) defining perf tests to run.")
   cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
   logger = log.New(os.Stderr, "", log.LstdFlags)
@@ -27,7 +26,7 @@ func printUsageAndBail(message string) {
 func main() {
   flag.Parse()
 
-  if *testFile == "" {
+  if *perffile == "" {
     printUsageAndBail("No test definition provided.")
   }
 
@@ -40,17 +39,23 @@ func main() {
     defer pprof.StopCPUProfile()
   }
 
-  testConfigs, err := NewTestConfigs(*testFile)
-
-  logger.Printf("error: %v", testConfigs)
+  perfConfigs, err := NewLogPerfConfigs(*perffile)
   if err != nil {
     logger.Printf("error: %v", err)
   } else {
-    logger.Printf("testConfigs: %v", testConfigs)
+    logger.Printf("perfConfigs: %v", perfConfigs)
   }
 
-  tcp := NewTCPOutput("127.0.0.1:5000", logger)
-  logflow := NewLogFlow(tcp, logger)
-  logflow.timerTask(40*time.Microsecond, 50000)
+  logperf := NewLogPerf(perfConfigs.LogPerfConfigs, logger)
 
+  logperf.Start()
+
+  //tcp := NewTCPOutput("127.0.0.1:5000", logger)
+  //tcp := NewTCPOutput("lmm-logstash-collector:4500", logger)
+  //logflow := NewLogFlow(tcp, "logperf", 300, 0, logger)
+  //go logflow.timerTask(30*time.Microsecond, 100000)
+
+  //tcp2 := NewTCPOutput("lmm-logstash-collector:4500", logger)
+  //logflow2 := NewLogFlow(tcp2, "logperf2", 200, 0, logger)
+  //logflow2.timerTask(30*time.Microsecond, 100000)
 }

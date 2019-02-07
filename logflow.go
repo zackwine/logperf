@@ -23,11 +23,12 @@ type LogFlow struct {
 }
 
 // NewLogFlow : Initialize LogFlow
-func NewLogFlow(output Output, logger *log.Logger) *LogFlow {
+func NewLogFlow(output Output, component string, msgpadding int, daysoffset int, logger *log.Logger) *LogFlow {
   l := &LogFlow{}
   l.UUID = uuid.Must(uuid.NewV4()).String()
-  l.loggen = NewLogGenerator("LogFlow", l.UUID)
-  l.loggen.SetMessagePaddingSizeBytes(300)
+  l.loggen = NewLogGenerator(component, l.UUID)
+  l.loggen.SetMessagePaddingSizeBytes(msgpadding)
+  l.loggen.SetTimestampOffsetDays(daysoffset)
   l.output = output
   l.log = logger
   l.msgchan = make(chan string)
@@ -96,4 +97,12 @@ func (l *LogFlow) stopTimerTask() {
     l.quittimer <- true
   }()
   l.output.StopOutput()
+}
+
+// Start : Start the log flow post to finished channel when task is complete
+func (l *LogFlow) Start(period time.Duration, count int, finished chan *LogFlow) {
+  go func() {
+    l.timerTask(period, count)
+    finished <- l
+  }()
 }
