@@ -5,3 +5,4 @@ tests:
     dayoffsets: 0
     message: '{ "message":"Fake message" }'
     component: "logperf"
+    routines: 1

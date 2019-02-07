@@ -14,6 +14,7 @@ type TestConfig struct {
   Daysoffset int
   Message    string
   Component  string
+  Routines   int
 }
 
 type TestConfigs struct {

@@ -6,6 +6,7 @@ import (
   "time"
 )
 
+// LogGenerator : Used to generate JSON like logs messages
 type LogGenerator struct {
   baseMap                 map[string]string
   baseMessage             string
@@ -16,6 +17,7 @@ type LogGenerator struct {
   randstrgen              *RandStringGen
 }
 
+// NewLogGenerator : Initialize a LogGenerator
 func NewLogGenerator(componentName string, uuid string) *LogGenerator {
   l := &LogGenerator{}
   // Set default timestamp field
@@ -39,10 +41,12 @@ func NewLogGenerator(componentName string, uuid string) *LogGenerator {
   return l
 }
 
+// SetBaseMessage :
 func (l *LogGenerator) SetBaseMessage(baseMessage string) {
   l.baseMessage = baseMessage
 }
 
+// SetMessagePaddingSizeBytes :
 func (l *LogGenerator) SetMessagePaddingSizeBytes(messagePaddingSizeBytes int) {
   l.messagePaddingSizeBytes = messagePaddingSizeBytes
   if l.messagePaddingSizeBytes > 0 {
@@ -52,22 +56,27 @@ func (l *LogGenerator) SetMessagePaddingSizeBytes(messagePaddingSizeBytes int) {
   }
 }
 
+// SetTimestampFieldName :
 func (l *LogGenerator) SetTimestampFieldName(timestampFieldName string) {
   l.timestampFieldName = timestampFieldName
 }
 
+// SetTimestampOffsetDays :
 func (l *LogGenerator) SetTimestampOffsetDays(timestampOffsetDays int) {
   l.timestampOffsetDays = timestampOffsetDays
 }
 
+// SetField :
 func (l *LogGenerator) SetField(field string, value string) {
   l.baseMap[field] = value
 }
 
+// ResetSeqNum :
 func (l *LogGenerator) ResetSeqNum() {
   l.seqNum = 0
 }
 
+// GetMessage :
 func (l *LogGenerator) GetMessage(timestamp time.Time) (string, error) {
 
   l.baseMap["seqNum"] = strconv.Itoa(l.seqNum)

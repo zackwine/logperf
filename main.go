@@ -49,7 +49,7 @@ func main() {
     logger.Printf("testConfigs: %v", testConfigs)
   }
 
-  tcp := NewTcpOutput("127.0.0.1:5000", logger)
+  tcp := NewTCPOutput("127.0.0.1:5000", logger)
   logflow := NewLogFlow(tcp, logger)
   logflow.timerTask(40*time.Microsecond, 50000)
 

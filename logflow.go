@@ -7,6 +7,7 @@ import (
   uuid "github.com/satori/go.uuid"
 )
 
+// LogFlow : Create a log flow between a generator and output
 type LogFlow struct {
   count      int
   loggen     *LogGenerator
@@ -18,13 +19,14 @@ type LogFlow struct {
   Sent       int
   StartTime  time.Time
   Elapsed    time.Duration
-  Uuid       string
+  UUID       string
 }
 
+// NewLogFlow : Initialize LogFlow
 func NewLogFlow(output Output, logger *log.Logger) *LogFlow {
   l := &LogFlow{}
-  l.Uuid = uuid.Must(uuid.NewV4()).String()
-  l.loggen = NewLogGenerator("LogFlow", l.Uuid)
+  l.UUID = uuid.Must(uuid.NewV4()).String()
+  l.loggen = NewLogGenerator("LogFlow", l.UUID)
   l.loggen.SetMessagePaddingSizeBytes(300)
   l.output = output
   l.log = logger
@@ -35,8 +37,8 @@ func NewLogFlow(output Output, logger *log.Logger) *LogFlow {
 
 func (l *LogFlow) timeTrack(start time.Time, name string) {
   l.Elapsed = time.Since(start)
-  messages_per_sec := l.getMsgRate()
-  log.Printf("%s took %s to write %d messages (%f per second, with target %f).", name, l.Elapsed, l.Sent, messages_per_sec, l.TargetRate)
+  messagesPerSec := l.getMsgRate()
+  log.Printf("%s took %s to write %d messages (%f per second, with target %f).", name, l.Elapsed, l.Sent, messagesPerSec, l.TargetRate)
 }
 
 func (l *LogFlow) getMsgRate() float64 {
@@ -46,9 +48,9 @@ func (l *LogFlow) getMsgRate() float64 {
   } else {
     elapsed = time.Since(l.StartTime)
   }
-  elasped_secs := float64(elapsed) / float64(time.Second)
-  messages_per_sec := float64(l.Sent) / elasped_secs
-  return messages_per_sec
+  elaspedSecs := float64(elapsed) / float64(time.Second)
+  messagesPerSec := float64(l.Sent) / elaspedSecs
+  return messagesPerSec
 }
 
 // The duration is only valid down to a value of about: 40*time.Microsecond
@@ -77,7 +79,7 @@ func (l *LogFlow) timerTask(period time.Duration, count int) error {
       }
       l.msgchan <- msg
 
-      l.Sent += 1
+      l.Sent++
     case <-l.quittimer:
       l.log.Println("timerTask stopping")
       return nil

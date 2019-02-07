@@ -6,7 +6,8 @@ import (
     "net"
 )
 
-type TcpOutput struct {
+// TCPOutput : a channel based output for perftesting logs to a TCP input.
+type TCPOutput struct {
     address   string
     conn      net.Conn
     log       *log.Logger
@@ -15,9 +16,10 @@ type TcpOutput struct {
     running   bool
 }
 
-func NewTcpOutput(address string, logger *log.Logger) *TcpOutput {
+// NewTCPOutput : Initialize TCPOutput
+func NewTCPOutput(address string, logger *log.Logger) *TCPOutput {
 
-    h := &TcpOutput{
+    h := &TCPOutput{
         address:  address,
         log:      logger,
         stopchan: make(chan bool),
@@ -25,8 +27,9 @@ func NewTcpOutput(address string, logger *log.Logger) *TcpOutput {
     return h
 }
 
-// Implement the Output interface
-func (t *TcpOutput) StartOutput(input chan string) error {
+// StartOutput : Implement the Output interface.
+// Start reading from the channel and sending to the output.
+func (t *TCPOutput) StartOutput(input chan string) error {
     t.inputchan = input
 
     err := t.connect()
@@ -49,18 +52,19 @@ func (t *TcpOutput) StartOutput(input chan string) error {
                 //t.log.Println("Writing message", message)
             case <-t.stopchan:
                 t.log.Println("StartOutput stopping")
+                t.running = false
                 return
             }
         }
 
-        t.running = false
     }()
 
     return nil
 }
 
-// Implement the Output interface
-func (t *TcpOutput) StopOutput() error {
+// StopOutput : Implement the Output interface
+// Stop reading from the channel and sending to the output.
+func (t *TCPOutput) StopOutput() error {
     if !t.running {
         log.Println("This output is NOT running")
         return errors.New("This output is NOT running")
@@ -73,8 +77,8 @@ func (t *TcpOutput) StopOutput() error {
     return nil
 }
 
-func (t *TcpOutput) connect() error {
-    var err error = nil
+func (t *TCPOutput) connect() error {
+    var err error
     t.conn, err = net.Dial("tcp", t.address)
     if err != nil {
         t.log.Println("Failed to connect to", t.address)
@@ -83,7 +87,7 @@ func (t *TcpOutput) connect() error {
     return nil
 }
 
-func (t *TcpOutput) write(message string) error {
+func (t *TCPOutput) write(message string) error {
     // First var is an int bytesWritten?
     _, err := t.conn.Write([]byte(message + "\n"))
     if err != nil {
@@ -93,7 +97,7 @@ func (t *TcpOutput) write(message string) error {
     return nil
 }
 
-func (t *TcpOutput) close() error {
+func (t *TCPOutput) close() error {
     err := t.conn.Close()
     if err != nil {
         t.log.Println("Failed to close", t.address)
