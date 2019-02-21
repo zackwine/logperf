@@ -1,10 +1,9 @@
 logperfs:
   - output: "tcp"
-    addr: "127.0.0.1:5000"
-    count: 50000
+    addr: "lmm-logstash-collector:4500"
+    count: 5000000
     period: 40
     dayoffsets: 0
-    message: '{ "message":"Fake message" }'
     component: "logperf"
     padding: 300
-    routines: 1
+    routines: 5
