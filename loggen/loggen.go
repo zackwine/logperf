@@ -1,7 +1,8 @@
-package main
+package loggen
 
 import (
   "encoding/json"
+  "fmt"
   "strconv"
   "time"
 )
@@ -85,7 +86,7 @@ func (l *LogGenerator) GetMessage(timestamp time.Time) (string, error) {
 
   messagebytes, err := json.Marshal(l.baseMap)
   if err != nil {
-    logger.Println(err)
+    fmt.Println(err)
     return "", err
   }
 

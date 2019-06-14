@@ -1,71 +1,67 @@
-package main
+package logperf
 
 import (
     "log"
 
     "time"
-)
 
-type logFlowWrapper struct {
-    logPerfConfig   LogPerfConfig
-    logFlowRoutines []*LogFlow
-}
+    "github.com/winez/logperf/loggen"
+    "github.com/winez/logperf/outputs"
+)
 
 // LogPerf : a channel based output for perftesting logs to a TCP input.
 type LogPerf struct {
-    flows      []*logFlowWrapper
-    log        *log.Logger
-    finishchan chan *LogFlow
+    Config
+    log             *log.Logger
+    finishchan      chan *loggen.LogFlow
+    logFlowRoutines []*loggen.LogFlow
 }
 
 // NewLogPerf : Initialize LogPerf
-func NewLogPerf(logPerfConfigs []LogPerfConfig, logger *log.Logger) *LogPerf {
+func NewLogPerf(conf Config, logger *log.Logger) *LogPerf {
 
-    var flows []*logFlowWrapper
-
-    for _, conf := range logPerfConfigs {
-        curFlow := &logFlowWrapper{
-            logPerfConfig: conf,
-        }
-        flows = append(flows, curFlow)
-    }
-
-    l := &LogPerf{
+    return &LogPerf{
+        Config:     conf,
         log:        logger,
-        flows:      flows,
-        finishchan: make(chan *LogFlow),
+        finishchan: make(chan *loggen.LogFlow),
     }
-    return l
 }
 
-func (l *LogPerf) initLogFlow(logPerfConfig LogPerfConfig) *LogFlow {
-    var output Output
-    if logPerfConfig.Output == "tcp" {
-        output = NewTCPOutput(logPerfConfig.Addr, logger)
+func (l *LogPerf) initLogFlow() *loggen.LogFlow {
+    var output outputs.Output
+    l.log.Printf("Configuring output (%s)...", l.Output)
+    if l.Output == "tcp" {
+        output = outputs.NewTCPOutput(l.Addr, l.log)
+    } else if l.Output == "stdout" {
+        output = outputs.NewStdOutput(l.log)
     } else {
-
+        l.log.Fatalf("Invalid output specified %s", l.Output)
     }
-    return NewLogFlow(output, logPerfConfig.Component, logPerfConfig.Padding, logPerfConfig.Daysoffset, l.log)
+    return loggen.NewLogFlow(output, l.Component, l.Padding, l.Daysoffset, l.log)
 }
 
 // Start : Start a log perf test
-func (l *LogPerf) Start() error {
-    var flowCnt int
-    for _, flow := range l.flows {
-        // For each routine start a log flow
-        for i := 0; i < flow.logPerfConfig.Routines; i++ {
-            lfr := l.initLogFlow(flow.logPerfConfig)
-            flow.logFlowRoutines = append(flow.logFlowRoutines, lfr)
-            lfr.Start(time.Duration(flow.logPerfConfig.Period)*time.Microsecond, flow.logPerfConfig.Count, l.finishchan)
-            flowCnt++
+// finished channel can be nil for blocking calls
+func (l *LogPerf) Start(finished chan *LogPerf) error {
+
+    // For each routine start a log flow
+    for i := 0; i < l.Routines; i++ {
+        lfr := l.initLogFlow()
+        l.logFlowRoutines = append(l.logFlowRoutines, lfr)
+        lfr.Start(time.Duration(l.Period)*time.Microsecond, l.Count, l.finishchan)
+    }
+
+    // Wait on all routines to complete
+    for j := 0; j < l.Routines; j++ {
+        select {
+        case lf := <-l.finishchan:
+            l.log.Printf("Finshed a flow with rate %f.", lf.GetMsgRate())
         }
     }
 
-    for j := 0; j < flowCnt; j++ {
-        select {
-        case lf := <-l.finishchan:
-            l.log.Printf("Finshed a flow with rate %f.", lf.getMsgRate())
-        }
+    // Notify the finished channel this completed if provided
+    if finished != nil {
+        finished <- l
     }
 
     return nil

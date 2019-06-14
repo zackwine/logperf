@@ -1,0 +1,8 @@
+logperfs:
+  - output: "stdout"
+    count: 30
+    period: 40
+    dayoffsets: 0
+    component: "logperf"
+    padding: 300
+    routines: 5
