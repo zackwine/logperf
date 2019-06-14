@@ -1,9 +1,0 @@
-logperfs:
-  - output: "tcp"
-    addr: "lmm-logstash-collector:4500"
-    count: 5000000
-    period: 40
-    dayoffsets: 0
-    component: "logperf"
-    padding: 300
-    routines: 5

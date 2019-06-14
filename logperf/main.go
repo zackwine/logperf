@@ -6,10 +6,14 @@ import (
   "log"
   "os"
   "runtime/pprof"
+
+  "github.com/zackwine/logperf"
+  "github.com/zackwine/logperf/api"
 )
 
 var (
   perffile   = flag.String("perffile", "logperf.yaml", "The path to the logperf file (yaml) defining perf tests to run.")
+  http       = flag.Bool("http", false, "Enable restful API to start perf tests.")
   cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
   logger = log.New(os.Stderr, "", log.LstdFlags)
@@ -24,6 +28,7 @@ func printUsageAndBail(message string) {
 }
 
 func main() {
+  logger.SetFlags(log.LstdFlags | log.Lshortfile)
   flag.Parse()
 
   if *perffile == "" {
@@ -35,27 +40,29 @@ func main() {
     if err != nil {
       logger.Fatal(err)
     }
-    pprof.StartCPUProfile(f)
+    err = pprof.StartCPUProfile(f)
+    if err != nil {
+      logger.Fatal(err)
+    }
     defer pprof.StopCPUProfile()
   }
 
-  perfConfigs, err := NewLogPerfConfigs(*perffile)
+  if *http {
+    api.RunServer(logger)
+  }
+
+  cfgs, err := logperf.NewConfigs(*perffile)
   if err != nil {
     logger.Printf("error: %v", err)
   } else {
-    logger.Printf("perfConfigs: %v", perfConfigs)
+    logger.Printf("perfConfigs: %v", cfgs)
   }
 
-  logperf := NewLogPerf(perfConfigs.LogPerfConfigs, logger)
+  logperf := logperf.NewPerfGroup(cfgs.Configs, logger)
 
-  logperf.Start()
+  err = logperf.Start()
+  if err != nil {
+    logger.Fatal(err)
+  }
 
-  //tcp := NewTCPOutput("127.0.0.1:5000", logger)
-  //tcp := NewTCPOutput("lmm-logstash-collector:4500", logger)
-  //logflow := NewLogFlow(tcp, "logperf", 300, 0, logger)
-  //go logflow.timerTask(30*time.Microsecond, 100000)
-
-  //tcp2 := NewTCPOutput("lmm-logstash-collector:4500", logger)
-  //logflow2 := NewLogFlow(tcp2, "logperf2", 200, 0, logger)
-  //logflow2.timerTask(30*time.Microsecond, 100000)
 }

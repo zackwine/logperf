@@ -1,4 +1,4 @@
-package main
+package loggen
 
 import (
   "math/rand"

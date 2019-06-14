@@ -1,0 +1,21 @@
+logperfs:
+  - output: tcp
+    addr: "lmm-logstash-collector:4500"
+    count: 5000000
+    period: 40
+    dayoffsets: 0
+    routines: 5
+    timefield: "@timestamp"
+    fields:
+      sessionId: "<UUID>"
+      message: "<RAND:310>"
+      component: "logperf"
+      logger: loggen-util-test
+      nodeid: 0
+      nodetype: fake
+      logsource: console
+      subsystem: loggen
+      ssinst: "007"
+      dc: node.fake.dc
+      host: fake
+      loglevel: warn

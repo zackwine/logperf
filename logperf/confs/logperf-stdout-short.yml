@@ -1,0 +1,14 @@
+logperfs:
+  - output: stdout
+    count: 5
+    period: 40
+    dayoffsets: 0
+    padding: 300
+    routines: 1
+    timefield: logtime
+    counterfield: seqNum
+    fields:
+      sessionId: <UUID>
+      message: "<RAND:310>"
+      component: logperf
+      loglevel: warn
