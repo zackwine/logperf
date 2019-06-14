@@ -5,8 +5,8 @@ import (
 
     "time"
 
-    "github.com/winez/logperf/loggen"
-    "github.com/winez/logperf/outputs"
+    "github.com/zackwine/logperf/loggen"
+    "github.com/zackwine/logperf/outputs"
 )
 
 // LogPerf : a channel based output for perftesting logs to a TCP input.

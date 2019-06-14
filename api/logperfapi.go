@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	"github.com/winez/logperf"
+	"github.com/zackwine/logperf"
 )
 
 // LogPerfAPI -

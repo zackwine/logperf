@@ -4,7 +4,7 @@ import (
   "log"
   "time"
 
-  "github.com/winez/logperf/outputs"
+  "github.com/zackwine/logperf/outputs"
 )
 
 // FlowState the current state of the log flow

@@ -7,8 +7,8 @@ import (
   "os"
   "runtime/pprof"
 
-  "github.com/winez/logperf"
-  "github.com/winez/logperf/api"
+  "github.com/zackwine/logperf"
+  "github.com/zackwine/logperf/api"
 )
 
 var (
