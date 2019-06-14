@@ -1,6 +1,6 @@
 logperfs:
   - output: stdout
-    count: 30000
+    count: 5
     period: 40
     dayoffsets: 0
     padding: 300

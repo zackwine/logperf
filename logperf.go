@@ -37,7 +37,8 @@ func (l *LogPerf) initLogFlow() *loggen.LogFlow {
     } else {
         l.log.Fatalf("Invalid output specified %s", l.Output)
     }
-    return loggen.NewLogFlow(output, l.Component, l.Padding, l.Daysoffset, l.log)
+
+    return loggen.NewLogFlow(output, l.Fields, l.Timefield, l.CounterField, l.Daysoffset, l.log)
 }
 
 // Start : Start a log perf test

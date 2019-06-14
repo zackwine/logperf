@@ -13,6 +13,7 @@ import (
 
 var (
   perffile   = flag.String("perffile", "logperf.yaml", "The path to the logperf file (yaml) defining perf tests to run.")
+  http       = flag.Bool("http", false, "Enable restful API to start perf tests.")
   cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
   logger = log.New(os.Stderr, "", log.LstdFlags)
@@ -46,7 +47,9 @@ func main() {
     defer pprof.StopCPUProfile()
   }
 
-  api.RunServer(logger)
+  if *http {
+    api.RunServer(logger)
+  }
 
   cfgs, err := logperf.NewConfigs(*perffile)
   if err != nil {

@@ -10,16 +10,24 @@ import (
 
 // Config : Configruation to run log performance tests
 type Config struct {
-  Name       string `json:"name"`
-  Output     string `json:"output"`
-  Addr       string `json:"addr"`
-  Count      int    `json:"count"`
-  Period     int    `json:"period"`
-  Daysoffset int    `json:"daysoffset"`
-  Padding    int    `json:"padding"`
-  Message    string `json:"message"`
-  Component  string `json:"component"`
-  Routines   int    `json:"routines"`
+  // Name of the test
+  Name string `json:"name"`
+  // Routines - number of go routines (threads) to run concurrently
+  Routines int `json:"routines"`
+  // Output - The output to use 'tcp', 'http', or 'stdout'
+  Output string `json:"output"`
+  // Addr - The address to send logs only applies to certain outputs
+  Addr string `json:"addr"`
+  // Count - The number of logs to send
+  Count int `json:"count"`
+  // Period - The period to wait between each log in milliseconds
+  Period int `json:"period"`
+
+  // Daysoffset used to send logs with older timestamps
+  Daysoffset   int                    `json:"daysoffset"`
+  Timefield    string                 `json:"timefield"`
+  CounterField string                 `json:"counterfield"`
+  Fields       map[string]interface{} `json:"fields"`
 }
 
 // Configs : A list of logperf configs that can be Marshalled from yaml

@@ -67,6 +67,9 @@ func (l *LogPerfAPI) CreateLogPerf(w http.ResponseWriter, r *http.Request) {
 		l.log.Print(cfg)
 		response["message"] = "Created logperf test"
 		curPerf := logperf.NewLogPerf(cfg, l.log)
+
+		// TODO validate JSON further
+		// TODO ensure unique test names
 		l.logperfs = append(l.logperfs, curPerf)
 		go func(lp *logperf.LogPerf) {
 			err := lp.Start(nil)

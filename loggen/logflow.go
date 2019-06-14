@@ -4,7 +4,6 @@ import (
   "log"
   "time"
 
-  uuid "github.com/satori/go.uuid"
   "github.com/winez/logperf/outputs"
 )
 
@@ -34,17 +33,13 @@ type LogFlow struct {
   Sent       int
   StartTime  time.Time
   Elapsed    time.Duration
-  UUID       string
   State      FlowState
 }
 
 // NewLogFlow : Initialize LogFlow
-func NewLogFlow(output outputs.Output, component string, msgpadding int, daysoffset int, logger *log.Logger) *LogFlow {
+func NewLogFlow(output outputs.Output, fields map[string]interface{}, timeField string, counterField string, daysoffset int, logger *log.Logger) *LogFlow {
   l := &LogFlow{}
-  l.UUID = uuid.Must(uuid.NewV4()).String()
-  l.loggen = NewLogGenerator(component, l.UUID)
-  l.loggen.SetMessagePaddingSizeBytes(msgpadding)
-  l.loggen.SetTimestampOffsetDays(daysoffset)
+  l.loggen = NewLogGenerator(fields, timeField, counterField, daysoffset, logger)
   l.output = output
   l.log = logger
   l.msgchan = make(chan string)
