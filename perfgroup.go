@@ -32,12 +32,11 @@ func NewPerfGroup(cfgs []Config, logger *log.Logger) *PerfGroup {
 func (l *PerfGroup) Start() error {
 
 	for _, logperf := range l.logperfs {
-		go func(lp *LogPerf) {
-			err := lp.Start(l.finishchan)
-			if err != nil {
-				l.log.Fatal(err)
-			}
-		}(logperf)
+		err := logperf.Start(l.finishchan)
+		if err != nil {
+			l.log.Print(err)
+			return err
+		}
 	}
 
 	// Wait on all perfs to complete
@@ -53,6 +52,9 @@ func (l *PerfGroup) Start() error {
 
 // Stop : Start a log perf test
 func (l *PerfGroup) Stop() error {
+	for _, lp := range l.logperfs {
+		lp.Stop()
+	}
 
 	return nil
 }

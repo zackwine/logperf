@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -9,8 +10,15 @@ import (
 	"github.com/go-chi/render"
 )
 
-// Routes - build routes
-func Routes(logger *log.Logger) *chi.Mux {
+// HTTPServer used to create a server
+type HTTPServer struct {
+	Logger *log.Logger
+	Addr   string
+	server *http.Server
+}
+
+// routes - build routes
+func (h *HTTPServer) routes() *chi.Mux {
 	router := chi.NewRouter()
 	router.Use(
 		render.SetContentType(render.ContentTypeJSON),
@@ -20,7 +28,7 @@ func Routes(logger *log.Logger) *chi.Mux {
 		middleware.Recoverer,
 	)
 
-	api := NewLogPerfAPI(logger)
+	api := NewLogPerfAPI(h.Logger)
 
 	router.Route("/v1", func(r chi.Router) {
 		r.Mount("/api/logperf", api.LogperfRoutes())
@@ -29,9 +37,20 @@ func Routes(logger *log.Logger) *chi.Mux {
 	return router
 }
 
-// RunServer - run http server
-func RunServer(logger *log.Logger) {
-	router := Routes(logger)
+// Start - run http server
+func (h *HTTPServer) Start() {
+	router := h.routes()
 
-	logger.Fatal(http.ListenAndServe(":8080", router))
+	h.server = &http.Server{Addr: h.Addr, Handler: router}
+
+	go h.server.ListenAndServe()
+}
+
+// Stop - stop the http server
+func (h *HTTPServer) Stop() {
+	err := h.server.Shutdown(context.Background())
+	if err != nil {
+		h.Logger.Println("Failed to stop server")
+		h.Logger.Print(err)
+	}
 }

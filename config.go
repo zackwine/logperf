@@ -19,7 +19,7 @@ type Config struct {
   // Addr - The address to send logs only applies to certain outputs
   Addr string `json:"addr"`
   // Count - The number of logs to send
-  Count int `json:"count"`
+  Count int64 `json:"count"`
   // Period - The period to wait between each log in milliseconds
   Period int `json:"period"`
 

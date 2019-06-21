@@ -5,18 +5,19 @@ import (
   "fmt"
   "log"
   "os"
+  "os/signal"
   "runtime/pprof"
+  "syscall"
 
   "github.com/zackwine/logperf"
   "github.com/zackwine/logperf/api"
 )
 
 var (
-  perffile   = flag.String("perffile", "logperf.yaml", "The path to the logperf file (yaml) defining perf tests to run.")
+  perffile   = flag.String("perffile", "", "The path to the logperf file (yaml) defining perf tests to run.")
   http       = flag.Bool("http", false, "Enable restful API to start perf tests.")
   cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
-
-  logger = log.New(os.Stderr, "", log.LstdFlags)
+  logfile    = flag.Bool("logfile", false, "Log to file /var/log/logperf.log")
 )
 
 func printUsageAndBail(message string) {
@@ -27,12 +28,36 @@ func printUsageAndBail(message string) {
   os.Exit(64)
 }
 
+func runperffile(logger *log.Logger) {
+
+  cfgs, err := logperf.NewConfigs(*perffile)
+  if err != nil {
+    logger.Printf("error: %v", err)
+  } else {
+    logger.Printf("perfConfigs: %v", cfgs)
+  }
+
+  logperf := logperf.NewPerfGroup(cfgs.Configs, logger)
+
+  err = logperf.Start()
+  if err != nil {
+    logger.Fatal(err)
+  }
+
+}
+
 func main() {
-  logger.SetFlags(log.LstdFlags | log.Lshortfile)
+
   flag.Parse()
 
-  if *perffile == "" {
-    printUsageAndBail("No test definition provided.")
+  logger := log.New(os.Stderr, "", log.LstdFlags|log.Lshortfile)
+  if *logfile {
+    f, err := os.OpenFile("/var/log/logperf.log",
+      os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+    if err != nil {
+      logger.Fatalln(err)
+    }
+    logger = log.New(f, "", log.LstdFlags|log.Lshortfile)
   }
 
   if *cpuprofile != "" {
@@ -48,21 +73,21 @@ func main() {
   }
 
   if *http {
-    api.RunServer(logger)
-  }
+    httpServer := &api.HTTPServer{Logger: logger, Addr: ":8080"}
+    // Server runs async
+    httpServer.Start()
+    // Wait on signal from user
+    sigs := make(chan os.Signal, 1)
+    signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+    sig := <-sigs
+    httpServer.Stop()
+    fmt.Println("Exiting with signal:")
+    fmt.Println(sig)
 
-  cfgs, err := logperf.NewConfigs(*perffile)
-  if err != nil {
-    logger.Printf("error: %v", err)
+  } else if *perffile != "" {
+    runperffile(logger)
   } else {
-    logger.Printf("perfConfigs: %v", cfgs)
-  }
-
-  logperf := logperf.NewPerfGroup(cfgs.Configs, logger)
-
-  err = logperf.Start()
-  if err != nil {
-    logger.Fatal(err)
+    flag.PrintDefaults()
   }
 
 }

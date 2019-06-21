@@ -4,22 +4,26 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+	uuid "github.com/satori/go.uuid"
 	"github.com/zackwine/logperf"
 )
 
 // LogPerfAPI -
 type LogPerfAPI struct {
 	log      *log.Logger
-	logperfs []*logperf.LogPerf
+	logperfs map[string]*logperf.LogPerf
 }
 
 // NewLogPerfAPI - Instantiate a log perf API instance
 func NewLogPerfAPI(logger *log.Logger) *LogPerfAPI {
+	logperfs := make(map[string]*logperf.LogPerf)
 	return &LogPerfAPI{
-		log: logger,
+		log:      logger,
+		logperfs: logperfs,
 	}
 }
 
@@ -36,25 +40,34 @@ func (l *LogPerfAPI) LogperfRoutes() *chi.Mux {
 // GetLogPerf - list information about logperfs
 func (l *LogPerfAPI) GetLogPerf(w http.ResponseWriter, r *http.Request) {
 	logperfID := chi.URLParam(r, "logperfID")
-	logperf := logperf.Config{
-		Name:   logperfID,
-		Output: "stdout",
+	response := make(map[string]interface{})
+
+	if lp, hasname := l.logperfs[logperfID]; hasname {
+		response["id"] = logperfID
+		response["logperf"] = lp
+		response["target"] = lp.GetTargetCount()
+		response["count"] = lp.GetCurrentCount()
+		response["percentage"] = lp.GetCurrentCount() / lp.GetTargetCount()
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+		response["error"] = "Failed to find test (" + logperfID + ")"
 	}
-	render.JSON(w, r, logperf)
+	render.JSON(w, r, response)
 }
 
 // DeleteLogPerf - Delete a logperf test
 func (l *LogPerfAPI) DeleteLogPerf(w http.ResponseWriter, r *http.Request) {
 	logperfID := chi.URLParam(r, "logperfID")
-	response := make(map[string]string)
+	response := make(map[string]interface{})
+
 	response["message"] = "Deleted logperf test " + logperfID
 	render.JSON(w, r, response)
 }
 
-// CreateLogPerf - Delete a logperf test
+// CreateLogPerf - Create a log perf test
 func (l *LogPerfAPI) CreateLogPerf(w http.ResponseWriter, r *http.Request) {
 	var cfg logperf.Config
-	response := make(map[string]string)
+	response := make(map[string]interface{})
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&cfg)
 	if err != nil {
@@ -62,21 +75,26 @@ func (l *LogPerfAPI) CreateLogPerf(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		response["message"] = "Failed to decode JSON"
 		response["error"] = err.Error()
-
 	} else {
 		l.log.Print(cfg)
-		response["message"] = "Created logperf test"
 		curPerf := logperf.NewLogPerf(cfg, l.log)
+		// Generate unique hash ID for this test
+		logperfID := uuid.Must(uuid.NewV4()).String()
+		// Remove dashes '-' from uuid generated above
+		logperfID = strings.Replace(logperfID, "-", "", -1)
 
-		// TODO validate JSON further
-		// TODO ensure unique test names
-		l.logperfs = append(l.logperfs, curPerf)
-		go func(lp *logperf.LogPerf) {
-			err := lp.Start(nil)
-			if err != nil {
-				l.log.Println(err)
-			}
-		}(curPerf)
+		l.logperfs[logperfID] = curPerf
+		response["id"] = logperfID
+
+		err := curPerf.Start(nil)
+		if err != nil {
+			l.log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			response["error"] = err
+			response["message"] = "Failed to create logperf test (" + cfg.Name + ")"
+		} else {
+			response["message"] = "Created logperf test (" + cfg.Name + ")"
+		}
 	}
 
 	render.JSON(w, r, response)
@@ -84,7 +102,7 @@ func (l *LogPerfAPI) CreateLogPerf(w http.ResponseWriter, r *http.Request) {
 
 // GetAllLogPerfs - Delete a logperf test
 func (l *LogPerfAPI) GetAllLogPerfs(w http.ResponseWriter, r *http.Request) {
-	response := make(map[string]string)
-	response["message"] = "All logperf tests"
+	response := make(map[string]interface{})
+	response["logperfs"] = l.logperfs
 	render.JSON(w, r, response)
 }
