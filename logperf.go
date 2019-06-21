@@ -50,7 +50,7 @@ func (l *LogPerf) GetTargetCount() int64 {
 func (l *LogPerf) GetCurrentCount() int64 {
     var curCnt int64
     for _, lfr := range l.logFlowRoutines {
-        curCnt += lfr.Count
+        curCnt += lfr.Sent
     }
     return curCnt
 }

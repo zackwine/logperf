@@ -30,7 +30,7 @@ type LogFlow struct {
   quittimer  chan bool
   log        *log.Logger
   TargetRate float64
-  Sent       int
+  Sent       int64
   StartTime  time.Time
   Elapsed    time.Duration
   State      FlowState

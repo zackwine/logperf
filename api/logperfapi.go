@@ -47,10 +47,10 @@ func (l *LogPerfAPI) GetLogPerf(w http.ResponseWriter, r *http.Request) {
 		response["logperf"] = lp
 		response["target"] = lp.GetTargetCount()
 		response["count"] = lp.GetCurrentCount()
-		response["percentage"] = lp.GetCurrentCount() / lp.GetTargetCount()
+		response["percentage"] = float64(lp.GetCurrentCount()) / float64(lp.GetTargetCount()) * 100
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
-		response["error"] = "Failed to find test (" + logperfID + ")"
+		response["error"] = "Failed to find ID (" + logperfID + ")"
 	}
 	render.JSON(w, r, response)
 }
@@ -60,7 +60,15 @@ func (l *LogPerfAPI) DeleteLogPerf(w http.ResponseWriter, r *http.Request) {
 	logperfID := chi.URLParam(r, "logperfID")
 	response := make(map[string]interface{})
 
-	response["message"] = "Deleted logperf test " + logperfID
+	if lp, hasname := l.logperfs[logperfID]; hasname {
+		lp.Stop()
+		delete(l.logperfs, logperfID)
+		response["message"] = "Deleted logperf test " + logperfID
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+		response["error"] = "Failed to find ID (" + logperfID + ")"
+	}
+
 	render.JSON(w, r, response)
 }
 
