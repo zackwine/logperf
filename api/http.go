@@ -23,7 +23,6 @@ func (h *HTTPServer) routes() *chi.Mux {
 	router.Use(
 		render.SetContentType(render.ContentTypeJSON),
 		middleware.Logger,
-		middleware.DefaultCompress,
 		middleware.RedirectSlashes,
 		middleware.Recoverer,
 	)

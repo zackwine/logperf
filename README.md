@@ -3,8 +3,21 @@ Logging performance utility
 
 ## Building
 
-From the top directory run this to ensure the build uses the local copy of your files:
+Run this once to ensure your go.mod points to your local copy of logperf:
 
 ```
-go mod edit -replace github.com/zackwine/logperf=${PWD}
+make config
+```
+
+Build for host:
+
+
+```
+make build
+```
+
+Build for linux:
+
+```
+make build-linux
 ```

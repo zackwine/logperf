@@ -87,7 +87,7 @@ func (l *LogPerfAPI) CreateLogPerf(w http.ResponseWriter, r *http.Request) {
 		l.log.Print(cfg)
 		curPerf := logperf.NewLogPerf(cfg, l.log)
 		// Generate unique hash ID for this test
-		logperfID := uuid.Must(uuid.NewV4()).String()
+		logperfID := uuid.NewV4().String()
 		// Remove dashes '-' from uuid generated above
 		logperfID = strings.Replace(logperfID, "-", "", -1)
 
