@@ -19,8 +19,8 @@ logperfs:
       householdId: "<RANDINT:8:50>"
       deviceId: "<RANDINT:10:50>"
       sessionId: "<UUID:5>"
-      busUnitId: ASTRO
-      community: Malaysia Live
+      busUnitId: LOGPERF
+      community: Logperf Live
       targetApiId: "<ENUM:content,grid,assetDetails,TITL0000000000243439~CATC0000000000243439~vod,userPreferences,settings,dca>"
       url: "<ENUM:http://ctap-ctap-cma-haproxy:8888/tenant/assetDetails/,http://ctap-ctap-cma-haproxy:8888/tenant/action,http://ctap012-ctap-cue-4116818717-xpjrm:8000/ctap/r1.3.0/agg/library/planner?recordingState=inProgress%2Cended&sort=-date&limit=50&isAdult=false&isErotic=true,http://ctap012-ctap-cue-4116818717-xpjrm:8000/ctap/r1.3.0/agg/recommendations/toplist?isAdult=true&limit=20&isErotic=true&topLevelFilterTag=Boxset&source=vod,http://ctap-ctap-cma-haproxy:8888/tenant/catalogue/>"
       httpCode: "<ENUM:200,200,200,200,200,404,200>"
@@ -30,8 +30,8 @@ logperfs:
       duration: "<RANDINT:3:50>"
       userProfileId: "<RANDINT:10:50>"
       bytes: "<RANDINT:8:50>"
-      ctapUxProfile: "<ENUM:default/Astro_unmanaged,default/NULL>"
+      ctapUxProfile: "<ENUM:default/logperf_unmanaged,default/NULL>"
       ctapPluginsVersion: "latest (20.1.2.77)"
       service: "cue"
-      msg: "<ENUM:bsOrigSz:123;bsResSz:0,problem with request(1): {'error':{'id':'ELCNnotFound''source':'CTAP''message':{'errorMsg':'logicalChannelNumber not found'}}}>"
+      msg: "<ENUM:bsOrigSz:123;bsResSz:0,bsOrigSz:2020;bsResSz:1259,bsOrigSz:123;bsResSz:0,problem with request(1): {'error':{'id':'ELCNnotFound''source':'CTAP''message':{'errorMsg':'logicalChannelNumber not found'}}}>"
 
