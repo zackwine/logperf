@@ -17,7 +17,8 @@ type LogGenerator struct {
 	log                 *log.Logger
 	baseMap             map[string]interface{}
 	randomStrings       map[string][]string
-	UUIDstrings         map[string][]string
+	uuidStrings         map[string][]string
+	enumStrings         map[string][]string
 	timestampFieldName  string
 	timestampOffsetDays int
 	counterFieldname    string
@@ -44,7 +45,8 @@ func NewLogGenerator(fields map[string]interface{}, timestampField string, count
 
 	l.baseMap = make(map[string]interface{})
 	l.randomStrings = make(map[string][]string)
-	l.UUIDstrings = make(map[string][]string)
+	l.uuidStrings = make(map[string][]string)
+	l.enumStrings = make(map[string][]string)
 
 	// Create a regex to help generate random strings for padding
 	randregex := "^<RAND:([0-9]+)(:([0-9]+))?>$"
@@ -60,6 +62,13 @@ func NewLogGenerator(fields map[string]interface{}, timestampField string, count
 		l.log.Println("Failed to compile regex " + UUIDRegex)
 	}
 
+	// Create regex to match ENUM
+	EnumRegex := "^<ENUM:(.*)>$"
+	EnumMatcher, err := regexp.Compile(EnumRegex)
+	if err != nil {
+		l.log.Println("Failed to compile regex " + EnumRegex)
+	}
+
 	l.randstrgen = NewRandStringGen()
 
 	for key, val := range fields {
@@ -68,6 +77,7 @@ func NewLogGenerator(fields map[string]interface{}, timestampField string, count
 		if strval, ok := val.(string); ok {
 			randMatches := randMatcher.FindStringSubmatch(strval)
 			UUIDMatches := UUIDMatcher.FindStringSubmatch(strval)
+			EnumMatches := EnumMatcher.FindStringSubmatch(strval)
 
 			if randMatches != nil {
 				randStrLen, err := strconv.Atoi(randMatches[1])
@@ -96,6 +106,8 @@ func NewLogGenerator(fields map[string]interface{}, timestampField string, count
 				}
 				l.generateUUIDs(key, UUIDCnt)
 
+			} else if EnumMatches != nil {
+				l.enumStrings[key] = strings.Split(EnumMatches[1], ",")
 			} else {
 				l.baseMap[key] = val
 			}
@@ -123,7 +135,7 @@ func (l *LogGenerator) generateUUIDs(field string, count int) {
 		// Remove dashes '-' from uuid
 		genUUIDs[i] = strings.Replace(uuid.NewV4().String(), "-", "", -1)
 	}
-	l.UUIDstrings[field] = genUUIDs
+	l.uuidStrings[field] = genUUIDs
 }
 
 // SetField :
@@ -149,9 +161,14 @@ func (l *LogGenerator) GetMessage(timestamp time.Time) (string, error) {
 		l.baseMap[key] = l.randomStrings[key][r]
 	}
 
-	for key, values := range l.UUIDstrings {
+	for key, values := range l.uuidStrings {
 		r := l.randstrgen.RandNum(len(values))
-		l.baseMap[key] = l.UUIDstrings[key][r]
+		l.baseMap[key] = l.uuidStrings[key][r]
+	}
+
+	for key, values := range l.enumStrings {
+		r := l.randstrgen.RandNum(len(values))
+		l.baseMap[key] = l.enumStrings[key][r]
 	}
 
 	messagebytes, err := json.Marshal(l.baseMap)

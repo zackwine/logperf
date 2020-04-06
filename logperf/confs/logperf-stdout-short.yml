@@ -14,3 +14,4 @@ logperfs:
       msg: "<RAND:10>"
       component: logperf
       loglevel: warn
+      action: "<ENUM:post,get,delete,put>"
