@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -17,6 +18,7 @@ type LogGenerator struct {
 	log                 *log.Logger
 	baseMap             map[string]interface{}
 	randomStrings       map[string][]string
+	randomInts          map[string][]int64
 	uuidStrings         map[string][]string
 	enumStrings         map[string][]string
 	timestampFieldName  string
@@ -45,14 +47,27 @@ func NewLogGenerator(fields map[string]interface{}, timestampField string, count
 
 	l.baseMap = make(map[string]interface{})
 	l.randomStrings = make(map[string][]string)
+	l.randomInts = make(map[string][]int64)
 	l.uuidStrings = make(map[string][]string)
 	l.enumStrings = make(map[string][]string)
+
+	// Set some defaults for require fields
+	l.baseMap["component"] = "logperf"
+	l.baseMap["action"] = "blast"
+	l.baseMap["loglevel"] = "warn"
 
 	// Create a regex to help generate random strings for padding
 	randregex := "^<RAND:([0-9]+)(:([0-9]+))?>$"
 	randMatcher, err := regexp.Compile(randregex)
 	if err != nil {
 		l.log.Println("Failed to compile regex " + randregex)
+	}
+
+	// Create a regex to help generate random ints for padding
+	randIntRegex := "^<RANDINT:([0-9]+)(:([0-9]+))?>$"
+	randIntMatcher, err := regexp.Compile(randIntRegex)
+	if err != nil {
+		l.log.Println("Failed to compile regex " + randIntRegex)
 	}
 
 	// Create regex to match UUID
@@ -76,6 +91,7 @@ func NewLogGenerator(fields map[string]interface{}, timestampField string, count
 		//  If this is a string
 		if strval, ok := val.(string); ok {
 			randMatches := randMatcher.FindStringSubmatch(strval)
+			randIntsMatches := randIntMatcher.FindStringSubmatch(strval)
 			UUIDMatches := UUIDMatcher.FindStringSubmatch(strval)
 			EnumMatches := EnumMatcher.FindStringSubmatch(strval)
 
@@ -94,6 +110,22 @@ func NewLogGenerator(fields map[string]interface{}, timestampField string, count
 					randomCnt = 1
 				}
 				l.generateRandomStrings(key, randStrLen, randomCnt)
+
+			} else if randIntsMatches != nil {
+				randIntLen, err := strconv.Atoi(randIntsMatches[1])
+				if err != nil {
+					l.log.Printf("Failed to convert RAND length from string (%s) %v\n", strval, err)
+					randIntLen = 8
+				}
+
+				randomCnt, err := strconv.Atoi(randIntsMatches[3])
+				if err != nil {
+					if len(randIntsMatches[3]) != 0 {
+						l.log.Printf("Failed to convert RAND count from string (%s) %v\n", strval, err)
+					}
+					randomCnt = 1
+				}
+				l.generateRandomInts(key, randIntLen, randomCnt)
 
 			} else if UUIDMatches != nil {
 
@@ -126,7 +158,15 @@ func (l *LogGenerator) generateRandomStrings(field string, length int, count int
 		genStrings[i] = l.randstrgen.RandString(length)
 	}
 	l.randomStrings[field] = genStrings
+}
 
+func (l *LogGenerator) generateRandomInts(field string, length int, count int) {
+	genInts := make([]int64, count, count)
+	maxNum := math.Pow10(length+1) - 1
+	for i := 0; i < count; i++ {
+		genInts[i] = l.randstrgen.RandNum(int64(maxNum))
+	}
+	l.randomInts[field] = genInts
 }
 
 func (l *LogGenerator) generateUUIDs(field string, count int) {
@@ -148,8 +188,7 @@ func (l *LogGenerator) ResetSeqNum() {
 	l.seqNum = 0
 }
 
-// GetMessage : Generate a message
-func (l *LogGenerator) GetMessage(timestamp time.Time) (string, error) {
+func (l *LogGenerator) updateMessage(timestamp time.Time) {
 
 	l.baseMap[l.counterFieldname] = strconv.Itoa(l.seqNum)
 	l.seqNum++
@@ -157,19 +196,31 @@ func (l *LogGenerator) GetMessage(timestamp time.Time) (string, error) {
 	l.baseMap[l.timestampFieldName] = offsetstr
 
 	for key, values := range l.randomStrings {
-		r := l.randstrgen.RandNum(len(values))
+		r := l.randstrgen.RandNum(int64(len(values)))
 		l.baseMap[key] = l.randomStrings[key][r]
 	}
 
+	for key, values := range l.randomInts {
+		r := l.randstrgen.RandNum(int64(len(values)))
+		l.baseMap[key] = l.randomInts[key][r]
+	}
+
 	for key, values := range l.uuidStrings {
-		r := l.randstrgen.RandNum(len(values))
+		r := l.randstrgen.RandNum(int64(len(values)))
 		l.baseMap[key] = l.uuidStrings[key][r]
 	}
 
 	for key, values := range l.enumStrings {
-		r := l.randstrgen.RandNum(len(values))
+		r := l.randstrgen.RandNum(int64(len(values)))
 		l.baseMap[key] = l.enumStrings[key][r]
 	}
+
+}
+
+// GetJSONMessage : Generate a message in JSON format
+func (l *LogGenerator) GetJSONMessage(timestamp time.Time) (string, error) {
+
+	l.updateMessage(timestamp)
 
 	messagebytes, err := json.Marshal(l.baseMap)
 	if err != nil {
@@ -178,4 +229,39 @@ func (l *LogGenerator) GetMessage(timestamp time.Time) (string, error) {
 	}
 
 	return string(messagebytes[:]), err
+}
+
+// GetStandardMessage : Generate a message in LoggingStandard format
+func (l *LogGenerator) GetStandardMessage(timestamp time.Time) (string, error) {
+
+	var sb strings.Builder
+
+	l.updateMessage(timestamp)
+
+	fmt.Fprintf(&sb, "%v, %s, %s, %s", l.baseMap[l.timestampFieldName], l.baseMap["component"], l.baseMap["action"], l.baseMap["loglevel"])
+
+	for key, value := range l.baseMap {
+		if strval, ok := value.(string); ok {
+			if key == l.timestampFieldName {
+				continue
+			}
+			if key == "component" {
+				continue
+			}
+			if key == "action" {
+				continue
+			}
+			if key == "loglevel" {
+				continue
+			}
+
+			fmt.Fprintf(&sb, ", %s=\"%s\"", key, strval)
+		} else if intval, ok := value.(int64); ok {
+			fmt.Fprintf(&sb, ", %s=%d", key, intval)
+		} else if intval, ok := value.(int); ok {
+			fmt.Fprintf(&sb, ", %s=%d", key, intval)
+		}
+	}
+
+	return sb.String(), nil
 }

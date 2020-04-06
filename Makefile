@@ -23,6 +23,10 @@ clean:
 run: build
 	 ./logperf/$(BINARY_NAME) -perffile ./logperf/confs/logperf-stdout-short.yml
 
+# Run a simple perf config
+run-cue: build
+	 ./logperf/$(BINARY_NAME) -perffile ./logperf/confs/logperf-stdout-cue.yml
+
 # Cross compilation for linux
 build-linux:
 	cd logperf && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o ../xtargets/linux/$(BINARY_NAME) -v

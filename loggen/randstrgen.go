@@ -49,6 +49,6 @@ func (r *RandStringGen) RandString(n int) string {
 }
 
 // RandNum : Generate a random number less than `lessThan`
-func (r *RandStringGen) RandNum(lessThan int) int {
-	return r.randIns.Intn(lessThan)
+func (r *RandStringGen) RandNum(lessThan int64) int64 {
+	return r.randIns.Int63n(lessThan)
 }
