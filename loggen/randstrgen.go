@@ -1,8 +1,8 @@
 package loggen
 
 import (
-  "math/rand"
-  "time"
+	"math/rand"
+	"time"
 )
 
 // based on
@@ -10,38 +10,45 @@ import (
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const (
-  letterIdxBits = 6                    // 6 bits to represent a letter index
-  letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
-  letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
+	letterIdxBits = 6                    // 6 bits to represent a letter index
+	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
+	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
 )
 
 // RandStringGen : Generate random strings of a given length of characters
 type RandStringGen struct {
-  Source rand.Source
+	Source  rand.Source
+	randIns *rand.Rand
 }
 
 // NewRandStringGen : Initialize a RandStringGen
 func NewRandStringGen() *RandStringGen {
-  r := &RandStringGen{}
-  r.Source = rand.NewSource(time.Now().UnixNano())
-  return r
+	r := &RandStringGen{}
+	r.Source = rand.NewSource(time.Now().UnixNano())
+	r.randIns = rand.New(r.Source)
+	return r
 }
 
 // RandString : Method to generate random strings
 func (r *RandStringGen) RandString(n int) string {
-  b := make([]byte, n)
-  // A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
-  for i, cache, remain := n-1, r.Source.Int63(), letterIdxMax; i >= 0; {
-    if remain == 0 {
-      cache, remain = r.Source.Int63(), letterIdxMax
-    }
-    if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
-      b[i] = letterBytes[idx]
-      i--
-    }
-    cache >>= letterIdxBits
-    remain--
-  }
+	b := make([]byte, n)
+	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
+	for i, cache, remain := n-1, r.Source.Int63(), letterIdxMax; i >= 0; {
+		if remain == 0 {
+			cache, remain = r.Source.Int63(), letterIdxMax
+		}
+		if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
+			b[i] = letterBytes[idx]
+			i--
+		}
+		cache >>= letterIdxBits
+		remain--
+	}
 
-  return string(b)
+	return string(b)
+}
+
+// RandNum : Generate a random number less than `lessThan`
+func (r *RandStringGen) RandNum(lessThan int) int {
+	return r.randIns.Intn(lessThan)
 }

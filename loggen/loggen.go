@@ -16,6 +16,8 @@ import (
 type LogGenerator struct {
 	log                 *log.Logger
 	baseMap             map[string]interface{}
+	randomStrings       map[string][]string
+	UUIDstrings         map[string][]string
 	timestampFieldName  string
 	timestampOffsetDays int
 	counterFieldname    string
@@ -33,7 +35,7 @@ func NewLogGenerator(fields map[string]interface{}, timestampField string, count
 		l.timestampFieldName = timestampField
 	}
 	if counterField == "" {
-		l.timestampFieldName = "seqNum"
+		l.counterFieldname = "seqNum"
 	} else {
 		l.counterFieldname = counterField
 	}
@@ -41,33 +43,59 @@ func NewLogGenerator(fields map[string]interface{}, timestampField string, count
 	l.log = logger
 
 	l.baseMap = make(map[string]interface{})
+	l.randomStrings = make(map[string][]string)
+	l.UUIDstrings = make(map[string][]string)
 
 	// Create a regex to help generate random strings for padding
-	randregex := "^<RAND:([0-9]+)>$"
+	randregex := "^<RAND:([0-9]+)(:([0-9]+))?>$"
 	randMatcher, err := regexp.Compile(randregex)
 	if err != nil {
 		l.log.Println("Failed to compile regex " + randregex)
 	}
 
-	// Set default timestamp field
+	// Create regex to match UUID
+	UUIDRegex := "^<UUID(:([0-9]+))?>$"
+	UUIDMatcher, err := regexp.Compile(UUIDRegex)
+	if err != nil {
+		l.log.Println("Failed to compile regex " + UUIDRegex)
+	}
+
 	l.randstrgen = NewRandStringGen()
 
 	for key, val := range fields {
 
-		//  If this random JSON value is a string treat it as such
+		//  If this is a string
 		if strval, ok := val.(string); ok {
 			randMatches := randMatcher.FindStringSubmatch(strval)
+			UUIDMatches := UUIDMatcher.FindStringSubmatch(strval)
+
 			if randMatches != nil {
 				randStrLen, err := strconv.Atoi(randMatches[1])
-				if err == nil {
-					l.log.Println("Failed to convert RAND val to string " + strval)
+				if err != nil {
+					l.log.Printf("Failed to convert RAND length from string (%s) %v\n", strval, err)
+					randStrLen = 10
 				}
-				l.baseMap[key] = l.randstrgen.RandString(randStrLen)
-			} else if strval == "<UUID>" {
-				uuidStr := uuid.NewV4().String()
-				// Remove dashes '-' from uuid generated above
-				uuidStr = strings.Replace(uuidStr, "-", "", -1)
-				l.baseMap[key] = uuidStr
+
+				randomCnt, err := strconv.Atoi(randMatches[3])
+				if err != nil {
+					if len(randMatches[3]) != 0 {
+						l.log.Printf("Failed to convert RAND count from string (%s) %v\n", strval, err)
+					}
+					randomCnt = 1
+				}
+				l.generateRandomStrings(key, randStrLen, randomCnt)
+
+			} else if UUIDMatches != nil {
+
+				UUIDCnt, err := strconv.Atoi(UUIDMatches[2])
+				if err != nil {
+					if len(UUIDMatches[2]) != 0 {
+						l.log.Printf("Failed to convert UUID count from string (%s) %v\n ", UUIDMatches[2], err)
+					}
+					UUIDCnt = 1
+				}
+				l.generateUUIDs(key, UUIDCnt)
+
 			} else {
 				l.baseMap[key] = val
 			}
@@ -78,6 +106,24 @@ func NewLogGenerator(fields map[string]interface{}, timestampField string, count
 	}
 
 	return l
+}
+
+func (l *LogGenerator) generateRandomStrings(field string, length int, count int) {
+	genStrings := make([]string, count, count)
+	for i := 0; i < count; i++ {
+		genStrings[i] = l.randstrgen.RandString(length)
+	}
+	l.randomStrings[field] = genStrings
+
+}
+
+func (l *LogGenerator) generateUUIDs(field string, count int) {
+	genUUIDs := make([]string, count, count)
+	for i := 0; i < count; i++ {
+		// Remove dashes '-' from uuid
+		genUUIDs[i] = strings.Replace(uuid.NewV4().String(), "-", "", -1)
+	}
+	l.UUIDstrings[field] = genUUIDs
 }
 
 // SetField :
@@ -97,6 +143,16 @@ func (l *LogGenerator) GetMessage(timestamp time.Time) (string, error) {
 	l.seqNum++
 	offsetstr := timestamp.AddDate(0, 0, -l.timestampOffsetDays).Format(time.RFC3339)
 	l.baseMap[l.timestampFieldName] = offsetstr
+
+	for key, values := range l.randomStrings {
+		r := l.randstrgen.RandNum(len(values))
+		l.baseMap[key] = l.randomStrings[key][r]
+	}
+
+	for key, values := range l.UUIDstrings {
+		r := l.randstrgen.RandNum(len(values))
+		l.baseMap[key] = l.UUIDstrings[key][r]
+	}
 
 	messagebytes, err := json.Marshal(l.baseMap)
 	if err != nil {

@@ -8,7 +8,9 @@ logperfs:
     timefield: logtime
     counterfield: seqNum
     fields:
-      sessionId: <UUID>
-      message: "<RAND:310>"
+      sessionId: <UUID:5>
+      logperfID: <UUID>
+      message: "<RAND:20:5>"
+      msg: "<RAND:10>"
       component: logperf
       loglevel: warn
