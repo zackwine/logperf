@@ -47,3 +47,8 @@ docker run -p 8080:8080 logperf:test
 
 curl -XPOST -d @tests/example.json 127.0.0.1:8080/v1/api/logperf
 ```
+
+
+Or look at the web app:
+
+http://127.0.0.1:8080/app/main.html

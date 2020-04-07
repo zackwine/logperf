@@ -11,9 +11,8 @@ FROM golang:buster as builder
       cp -vr /logperf/src/web/* /app/web/
 
 
-
-
-FROM golang:buster
+#FROM golang:buster
+FROM gcr.io/distroless/cc-debian10:fd0d99e8c54d7d7b2f3dd29f5093d030d192cbbc
 
     LABEL maintainer="Zack Wine <zwine@synamedia.com>"
     LABEL Description="Logperf docker image" Version="1.1"
