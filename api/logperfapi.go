@@ -75,7 +75,18 @@ func (l *LogPerfAPI) DeleteLogPerf(w http.ResponseWriter, r *http.Request) {
 // CreateLogPerf - Create a log perf test
 func (l *LogPerfAPI) CreateLogPerf(w http.ResponseWriter, r *http.Request) {
 	var cfg logperf.Config
+
+	// Extra debug for debugging decoder issues.
+	/*
+		requestDump, err2 := httputil.DumpRequest(r, true)
+		if err2 != nil {
+			l.log.Printf("Failed to dump request (%v)", err)
+		}
+		l.log.Printf("Received body (%s)", requestDump)
+	*/
+
 	response := make(map[string]interface{})
+
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&cfg)
 	if err != nil {

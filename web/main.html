@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Logperf</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="./bootstrap.min.css">
+  <script src="./jquery-3.2.1.min.js"></script>
+  <script src="./popper.min.js"></script>
+  <script src="./bootstrap.min.js"></script>
+</head>
+<body>
+
+<div class="jumbotron text-center">
+  <h1>Logperf</h1>
+  <p>Perf tool for generating logs</p> 
+</div>
+  
+<div class="container">
+  <div class="row">
+    <div class="card-group">
+      <div class="card" style="width:700px">
+        <div class="card-header bg-primary text-white">Create Logperf Test</div>
+        
+        <div class="card-body">
+
+          <form id="createTestForm" role="form" class="form-horizontal">
+
+            <div class="input-group mb-3">
+              <div class="input-group-prepend">
+                <span class="input-group-text">Output</span>
+              </div>
+              <select class="form-control" id="outputsSelect">
+                <option>stdout</option>
+                <option>TCP</option>
+                <option>HTTP</option>
+              </select>
+            </div>
+
+            <div class="input-group mb-3">
+              <div class="input-group-prepend">
+                <span class="input-group-text">Count</span>
+              </div>
+              <input id="countText" type="text" class="form-control" value="100000">
+            </div>
+
+            <div class="input-group mb-3">
+              <div class="input-group-prepend">
+                <span class="input-group-text">Period (ns)</span>
+              </div>
+              <input id="periodText" type="text" class="form-control" value="3000">
+            </div>
+
+            <div class="input-group mb-3">
+              <div class="input-group-prepend">
+                <span class="input-group-text">Routines</span>
+              </div>
+              <input id="routinesText" type="text" class="form-control" value="1">
+            </div>
+
+            <div class="form-group mb-3">
+              <label for="comment">Fields:</label>
+              <textarea wrap="off" class="form-control" rows="10" id="fieldsTextarea">  
+              </textarea>
+            </div>
+
+            <div class="form-group">
+              <div class="col-sm-offset-2 col-sm-8">
+                <button type="submit" class="btn btn-default">Start Test</button>
+              </div>
+            </div>
+            <div id="result"></div>
+
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header bg-warning text-white">NOTES</div>
+        
+        <div class="card-body">
+          <p class="card-text"><b>Count</b> - Then exact count of logs sent by this test.</p>
+          <p class="card-text"><b>Period</b> - The time between each logline in nanoseconds</p>
+          <p class="card-text"><b>Routines</b> - The number of golang routines to send count/period.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+$(document).ready(function(){
+
+  $( "#createTestForm" ).submit(function( event ) {
+    // Stop form from submitting normally
+    event.preventDefault();
+    
+    var request_JSON = {};
+    request_JSON["output"] = $("#outputsSelect").val();
+    request_JSON["count"] = parseInt($("#countText").val());
+    request_JSON["period"] = parseInt($("#periodText").val());
+    request_JSON["routines"] = parseInt($("#routinesText").val());
+
+    var fields = $("#fieldsTextarea").val();
+    request_JSON["fields"] = JSON.parse(fields);
+
+    console.dir(request_JSON)
+
+    // Send the data using post
+    var posting = $.post( "../v1/api/logperf",
+      JSON.stringify( request_JSON ),
+      function( data ) {
+        var content = $( data ).find( "#content" );
+        $( "#result" ).empty().append( content );
+      },
+      "json"
+    );
+
+    //alert( "Output is " + request_JSON["fields"]);
+  });
+
+
+  var defaultFields = ` {
+      "component": "CTAP",
+      "action": "CUE",
+      "loglevel": "<ENUM:warn,error>",
+      "FCID": "<UUID:60>",
+      "rportType": "res",
+      "api": "<ENUM:content,embeddedTimeline,seriesSeasons,recommendations_topList,playvod,grid,fullscreen,contentInstance,getPinPolicies,trickMode,timeline,favorites,aggLibraryPlanner>",
+      "clientIp": "NA",
+      "householdId": "<RANDINT:8:50>",
+      "deviceId": "<RANDINT:10:50>",
+      "sessionId": "<UUID:5>",
+      "busUnitId": "LOGPERF",
+      "community": "Logperf Live",
+      "targetApiId": "<ENUM:content,grid,assetDetails,TITL0000000000243439~CATC0000000000243439~vod,userPreferences,settings,dca>",
+      "url": "<ENUM:http://ctap-ctap-cma-haproxy:8888/tenant/assetDetails/,http://ctap-ctap-cma-haproxy:8888/tenant/action,http://ctap012-ctap-cue-4116818717-xpjrm:8000/ctap/r1.3.0/agg/library/planner?recordingState=inProgress%2Cended&sort=-date&limit=50&isAdult=false&isErotic=true,http://ctap012-ctap-cue-4116818717-xpjrm:8000/ctap/r1.3.0/agg/recommendations/toplist?isAdult=true&limit=20&isErotic=true&topLevelFilterTag=Boxset&source=vod,http://ctap-ctap-cma-haproxy:8888/tenant/catalogue/>",
+      "httpCode": "<ENUM:200,200,200,200,200,404,200>",
+      "httpMethod": "<ENUM:POST,GET>",
+      "deviceType": "<ENUM:ANDROID,STB-4K,IOS>",
+      "apiType": "refapi",
+      "duration": "<RANDINT:3:50>",
+      "userProfileId": "<RANDINT:10:50>",
+      "bytes": "<RANDINT:8:50>",
+      "ctapUxProfile": "<ENUM:default/logperf_unmanaged,default/NULL>",
+      "ctapPluginsVersion": "latest (20.1.2.77)",
+      "service": "cue",
+      "msg": "<ENUM:bsOrigSz:123;bsResSz:0,bsOrigSz:2020;bsResSz:1259,bsOrigSz:123;bsResSz:0,problem with request(1): {\'error\':{\'id\':\'ELCNnotFound\'\'source\':\'CTAP\'\'message\':{\'errorMsg\':\'logicalChannelNumber not found\'}}}>"
+    }
+    `;
+  
+  $("#fieldsTextarea").val(defaultFields);
+});
+
+ </script>
+
+
+</body>
+</html>
+

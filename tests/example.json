@@ -1,0 +1,17 @@
+{
+		"Name":         "test1",
+		"output":       "stdout",
+		"count":        2,
+		"period":       40,
+		"routines":     1,
+		"timefield":    "logtime",
+		"counterfield": "seqNum",
+		"fields": 
+                {
+			"sessionId": "<UUID>",
+			"message":   "<RAND:310>",
+			"component": "logperf",
+			"loglevel":  "warn"
+		}
+}
+

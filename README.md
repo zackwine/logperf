@@ -45,5 +45,5 @@ docker run -p 8080:8080 logperf:test
 
 # From another shell
 
-curl -XPOST -d @test.json 127.0.0.1:8080/v1/api/logperf
+curl -XPOST -d @tests/example.json 127.0.0.1:8080/v1/api/logperf
 ```
