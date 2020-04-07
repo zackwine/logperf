@@ -192,7 +192,7 @@ func (l *LogGenerator) updateMessage(timestamp time.Time) {
 
 	l.baseMap[l.counterFieldname] = strconv.Itoa(l.seqNum)
 	l.seqNum++
-	offsetstr := timestamp.AddDate(0, 0, -l.timestampOffsetDays).Format(time.RFC3339)
+	offsetstr := timestamp.AddDate(0, 0, -l.timestampOffsetDays).Format("2006-01-02T15:04:05.999Z07:00")
 	l.baseMap[l.timestampFieldName] = offsetstr
 
 	for key, values := range l.randomStrings {

@@ -110,7 +110,7 @@ func (l *LogFlow) timerTask(period time.Duration, count int64) error {
 	for i := int64(0); i < count; i++ {
 		select {
 		case t := <-ticker.C:
-			msg, err := l.getMsgPtr(t)
+			msg, err := l.getMsgPtr(t.UTC())
 			if err != nil {
 				l.log.Printf("error: %v", err)
 			}
