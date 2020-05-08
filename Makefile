@@ -47,3 +47,8 @@ docker-build: get-bootstrap
 
 docker-run: docker-build
 	docker run -p 8080:8080 logperf:$(IMAGE_VERSION)
+
+kube-run: docker-build
+	sed -i.bak "s/image: logperf:.*/image: logperf:$(IMAGE_VERSION)/g" ./kube/logperf-ds.yml
+	kubectl apply -f kube/logperf-ds.yml && sleep 20
+	kubectl -n infra get pods
