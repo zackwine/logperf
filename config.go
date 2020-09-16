@@ -24,6 +24,8 @@ type Config struct {
 	Count int64 `json:"count"`
 	// Period - The period to wait between each log in milliseconds
 	Period int `json:"period"`
+	// IndexBase - The only applies to the elasticsearch output index base name
+	IndexBase string `json:"indexbase"`
 
 	// Daysoffset used to send logs with older timestamps
 	Daysoffset   int                    `json:"daysoffset"`

@@ -1,11 +1,12 @@
 logperfs:
-  - output: stdout
-    outputformat: LoggingStandard
-    count: 5
-    period: 40
+  - output: elasticsearch
+    addr: "<some_url>"
+    outputformat: json
+    count: 10000
+    period: 1000
     dayoffsets: 0
-    padding: 300
-    routines: 1
+    padding: 700
+    routines: 2
     timefield: logtime
     counterfield: seqNum
     fields:

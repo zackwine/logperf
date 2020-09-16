@@ -39,6 +39,16 @@
 
             <div class="input-group mb-3">
               <div class="input-group-prepend">
+                <span class="input-group-text">Output Format</span>
+              </div>
+              <select class="form-control" id="outputFormatSelect">
+                <option>JSON</option>
+                <option>LoggingStandard</option>
+              </select>
+            </div>
+
+            <div class="input-group mb-3">
+              <div class="input-group-prepend">
                 <span class="input-group-text">Count</span>
               </div>
               <input id="countText" type="text" class="form-control" value="100000">
@@ -98,6 +108,7 @@ $(document).ready(function(){
     
     var request_JSON = {};
     request_JSON["output"] = $("#outputsSelect").val();
+    request_JSON["outputformat"] = $("#outputFormatSelect").val();
     request_JSON["count"] = parseInt($("#countText").val());
     request_JSON["period"] = parseInt($("#periodText").val());
     request_JSON["routines"] = parseInt($("#routinesText").val());

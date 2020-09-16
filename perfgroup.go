@@ -43,6 +43,7 @@ func (l *PerfGroup) Start() error {
 	for _ = range l.logperfs {
 		select {
 		case lp := <-l.finishchan:
+			lp.Stop()
 			l.log.Printf("Finshed a logperf test %s", lp.Name)
 		}
 	}

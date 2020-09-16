@@ -132,6 +132,7 @@ func (l *LogFlow) timerTask(period time.Duration, count int64) error {
 
 // Stop : Stop the this log flow
 func (l *LogFlow) Stop() {
+	l.output.StopOutput()
 	if l.State != Running {
 		l.log.Println("LogFlow not running.")
 		return
@@ -139,10 +140,6 @@ func (l *LogFlow) Stop() {
 	go func() {
 		l.quittimer <- true
 	}()
-	err := l.output.StopOutput()
-	if err != nil {
-		l.log.Println("Failed to stop output plugin.")
-	}
 }
 
 // Start : Start the log flow post to finished channel when task is complete
@@ -152,6 +149,11 @@ func (l *LogFlow) Start(period time.Duration, count int64, finished chan *LogFlo
 		err := l.timerTask(period, count)
 		if err != nil {
 			l.log.Println("Failed start timer task.")
+		}
+		// Stop output to flush any buffered lines
+		err = l.output.StopOutput()
+		if err != nil {
+			l.log.Println("Failed to stop output plugin.")
 		}
 		finished <- l
 	}()

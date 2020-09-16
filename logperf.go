@@ -34,6 +34,12 @@ func (l *LogPerf) initLogFlow() *loggen.LogFlow {
 		output = outputs.NewTCPOutput(l.Addr, l.log)
 	} else if l.Output == "stdout" {
 		output = outputs.NewStdOutput(l.log)
+	} else if l.Output == "elasticsearch" {
+		esConfig := outputs.ElasticSearchOutputConfig{
+			Addresses: []string{l.Addr},
+			IndexBase: l.IndexBase,
+		}
+		output = outputs.NewElasticSearchOutput(esConfig, l.log)
 	} else {
 		l.log.Fatalf("Invalid output specified %s", l.Output)
 	}

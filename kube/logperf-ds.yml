@@ -1,0 +1,62 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logperf
+  namespace: infra
+  labels:
+    app: logperf
+spec:
+  type: NodePort
+  ports:
+  - name: logperf-port
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+    nodePort: 30000
+  selector:
+    app: logperf
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: logperf
+  namespace: infra
+  labels:
+    k8s-app: logperf
+spec:
+  selector:
+    matchLabels:
+      app: logperf
+  template:
+    metadata:
+      labels:
+        app: logperf
+      annotations:
+        logForwardStdOut_logperf: "true"
+        loglane: "cdvr"
+    spec:
+      containers:
+      - name: logperf
+        image: logperf:20200605185925
+        ports:
+        - name: logperf-port
+          containerPort: 8080
+        env:
+          - name: MY_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: MY_POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+        resources:
+          limits:
+            memory: 500Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+      terminationGracePeriodSeconds: 30
+

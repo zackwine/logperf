@@ -3,6 +3,7 @@ module github.com/zackwine/logperf.git
 go 1.13
 
 require (
+	github.com/elastic/go-elasticsearch v0.0.0
 	github.com/go-chi/chi v4.1.0+incompatible
 	github.com/go-chi/render v1.0.1
 	github.com/satori/go.uuid v1.2.0
